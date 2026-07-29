@@ -53,6 +53,8 @@ The codebase is modularized to separate data hygiene, explicit modeling, and imp
 *    `shadow_elites.py`, `migration.py`,  `covid.py`,  `russia_nato.py`: The end-to-end In-Context Learning API pipeline. It dynamically generates stratified master contexts for Key-Value caching, executes decoupled API calls to a local LLM, and forces a strict JSON schema output. It mathematically encodes the classification decision as a probability vector distribution for downstream divergence evaluation.
 *   `visualization.py`: Contains the layout engines for rendering global classification metrics (Accuracy, QWK) and generating structural confusion matrix heatmaps.
 
+### Evaluation Pipeline
+*   `williams_M1vM2`: Merges the out-of-fold continuous predictions from Method 1 with the categorical predictions from Method 2. It aligns the datasets strictly on respondent IDs (handling formatting anomalies) and executes the William's t-test to compare their respective Pearson correlation coefficients against the ground truth.
 ---
 
 ## 4. Execution Requirements
