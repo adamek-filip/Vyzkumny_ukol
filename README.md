@@ -18,17 +18,25 @@ To rigorously isolate the predictive capacity of linguistic artifacts against tr
 
 ### Method 0: Baseline Mapping via Traditional Survey Variables
 Before analyzing semantically independent texts, we establish a baseline benchmark. We utilize regularized regression to map standard survey features (e.g., resilience, institutional trust, political ideology, threat perception) to the target conspiracy attitudes. 
-*   **Why this approach?** This step isolates the variance explained purely by standard psychometric surveying, establishing a strict lower bound for predictive performance that our text-based models must surpass to demonstrate utility.
 
 ### Method 1: Explicit Text Mapping via Mathematization
 This approach utilizes a Large Language Model (LLM) strictly as an unsupervised feature extractor, projecting the unstructured text $X_{text}$ into 55 predefined, human-interpretable linguistic dimensions. We apply a continuous regularized regression model paired with ordinal thresholding.
 
+First, Elastic Net with Dynamic Quantile Thresholding:
 This architecture treats the ordinal target as a continuous variable $y \in \mathbb{R}$, training a standard linear regression that minimizes the Mean Squared Error (MSE):
 
 $$ \mathcal{J}(\beta) = \frac{1}{2N} \sum_{i=1}^N (y_i - \mathbf{x}_i^T \beta)^2 + \alpha \left( \rho \|\beta\|_1 + \frac{1-\rho}{2} \|\beta\|_2^2 \right) $$
 
 During the inner cross-validation loop, the optimal hyperparameters ($\alpha$ and $\rho$) are selected using Negative Mean Squared Error (NMSE).
-*   **Dynamic Quantile Thresholding:** To discretize the continuous predictions back into ordinal classes, we implement Dynamic Quantile Thresholding via Empirical Cumulative Distribution Function matching. 
+*   **Dynamic Quantile Thresholding:** To discretize the continuous predictions back into ordinal classes, we implement Dynamic Quantile Thresholding via Empirical Cumulative Distribution Function matching.
+
+Second, custom Ordinal regression with Elastic Net regularization:
+This architecture directly models the ordinal nature of the target variable by simultaneously estimating the feature coefficients ($\beta$) and the cumulative category thresholds ($\zeta$). It trains a custom classifier that minimizes the Negative Log-Likelihood (NLL) paired with an Elastic Net penalty:
+
+$$ \mathcal{J}(\beta, \zeta) = - \frac{1}{N} \sum_{i=1}^N \log(P(y_i = y_{i, \text{true}} | \mathbf{x}_i)) + \alpha \left( \rho \|\beta\|_1 + \frac{1-\rho}{2} \|\beta\|_2^2 \right) $$
+
+During the inner cross-validation loop, the optimal hyperparameters ($\alpha$ and $\rho$) are selected using Negative Log-Loss as the tuning criterion.
+*   **Simultaneous Threshold Estimation:** This custom estimator utilizes the L-BFGS-B optimization algorithm to explicitly learn the optimal boundaries (cutpoints) between the ordinal classes during training.
 
 ### Method 2: Implicit Mapping via In-Context Learning (ICL)
 Instead of forcing text into predefined dimensions, this method utilizes the LLM as an end-to-end classifier by leveraging its native attention mechanism to compute similarities directly in its high-dimensional latent space. The model is provided with a system prompt detailing the psychometric context and 15 stratified, labeled historical examples.
@@ -39,11 +47,14 @@ Instead of forcing text into predefined dimensions, this method utilizes the LLM
 
 The codebase is modularized to separate data hygiene, explicit modeling, and implicit LLM inference.
 
-### Data Preparation Pipeline (Method 0 & 1)
+### Data Preparation Pipeline (Method 0 & 1 & 2)
 *   `demographic_data_prep_initial.py`: Handles the primary loading and alignment of the CAB panel waves, establishing the master ID reference and left-joining data to prevent accidental cohort dropping.
 *   `demographic_ordinal_2.py`: Unifies ordinal scales and constructs the global design matrix, employing aggressive global standardization and specific categorical mapping dictionaries.
 *   `demographic_data_prep.py`: Filters the tabular dataset to strictly match the respondents present in the NLP dataset, ensuring exact cohort alignment for valid cross-validation comparisons.
+*   `elbow_curve.py`: Systematically evaluates the impact of minimal character count thresholds (ranging from 100 to 500 characters) on predictive performance. By tracking the out-of-sample Pearson correlation and variance across differing text lengths, this script generates a diagnostic elbow curve to empirically validate the optimal character threshold for maximizing the NLP semantic signal.
+*   `data_load_augment.py`: Implements strict data hygiene by filtering the unstructured text based on character count. It guarantees sufficient semantic signal by isolating responses containing a minimum of 300 strictly alphabetic characters, explicitly omitting spaces, punctuation, and numbers via regex. Additionally, it applies an upper-bound truncation threshold to the target variables and prunes the raw text column prior to model ingestion.
 *   `JSON_creation.py`: Processes the target conspiracy CSV files into a single, cleaned JSON architecture optimized for stratified cross-validation.
+
 
 ### Explicit Modeling Pipeline (Method 0 & 1)
 *   `elastic_net_demographic.py` & `FINAL_elastic_net_2.py`: Executes the 10x10 Nested Stratified Cross-Validation for the continuous Elastic Net model. These scripts handle internal imputation and scaling to prevent data leakage and implement the Dynamic Quantile Thresholding logic.
