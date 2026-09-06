@@ -48,20 +48,20 @@ Instead of forcing text into predefined dimensions, this method utilizes the LLM
 The codebase is modularized to separate data hygiene, explicit modeling, and implicit LLM inference.
 
 ### Data Preparation Pipeline (Method 0 & 1 & 2)
-*   `demographic_data_prep_initial.py`: Handles the primary loading and alignment of the CAB panel waves, establishing the master ID reference and left-joining data to prevent accidental cohort dropping.
-*   `demographic_ordinal_2.py`: Unifies ordinal scales and constructs the global design matrix, employing aggressive global standardization and specific categorical mapping dictionaries.
-*   `demographic_data_prep.py`: Filters the tabular dataset to strictly match the respondents present in the NLP dataset, ensuring exact cohort alignment for valid cross-validation comparisons.
+*   `demographic_data_prep_1.py`: Handles the primary loading and alignment of the CAB panel waves, establishing the master ID reference and left-joining data to prevent accidental cohort dropping.
+*   `demographic_data_prep_2.py`: Filters the tabular dataset to strictly match the respondents present in the NLP dataset, ensuring exact cohort alignment for valid cross-validation comparisons.
+*   `demographic_data_prep_3.py`: Unifies ordinal scales and constructs the global design matrix, employing aggressive global standardization and specific categorical mapping dictionaries.
 *   `elbow_curve.py`: Systematically evaluates the impact of minimal character count thresholds (ranging from 100 to 500 characters) on predictive performance. By tracking the out-of-sample Pearson correlation and variance across differing text lengths, this script generates a diagnostic elbow curve to empirically validate the optimal character threshold for maximizing the NLP semantic signal.
 *   `data_load_augment.py`: Implements strict data hygiene by filtering the unstructured text based on character count. It guarantees sufficient semantic signal by isolating responses containing a minimum of 300 strictly alphabetic characters, explicitly omitting spaces, punctuation, and numbers via regex. Additionally, it applies an upper-bound truncation threshold to the target variables and prunes the raw text column prior to model ingestion.
 *   `JSON_creation.py`: Processes the target conspiracy CSV files into a single, cleaned JSON architecture optimized for stratified cross-validation.
 
 
 ### Explicit Modeling Pipeline (Method 0 & 1)
-*   `elastic_net_demographic.py` & `FINAL_elastic_net_2.py`: Executes the 10x10 Nested Stratified Cross-Validation for the continuous Elastic Net model. These scripts handle internal imputation and scaling to prevent data leakage and implement the Dynamic Quantile Thresholding logic.
-*   `ordinal_reg_demographic.py` & `FINAL_ordinal_reg_4.py`: Implements the custom `ElasticNetOrdinalRegression` estimator utilizing the L-BFGS-B optimization algorithm to directly model the ordinal nature of the targets.
+*   `demographic_elastic_net.py` & `55_dim_elastic_net.py`: Executes the 10x10 Nested Stratified Cross-Validation for the continuous Elastic Net model. These scripts handle internal imputation and scaling to prevent data leakage and implement the Dynamic Quantile Thresholding logic.
+*   `demographic_ordinal_reg.py` & `55_dim_ordinal_reg.py`: Implements the custom `ElasticNetOrdinalRegression` estimator utilizing the L-BFGS-B optimization algorithm to directly model the ordinal nature of the targets.
 
 ### Implicit Modeling Pipeline (Method 2)
-*    `shadow_elites.py`, `migration.py`,  `covid.py`,  `russia_nato.py`: The end-to-end In-Context Learning API pipeline. It dynamically generates stratified master contexts for Key-Value caching, executes decoupled API calls to a local LLM, and forces a strict JSON schema output. It mathematically encodes the classification decision as a probability vector distribution for downstream divergence evaluation.
+*    `ICL_shadow_elites.py`, `ICL_migration.py`,  `ICL_covid.py`,  `ICL_russia_nato.py`: The end-to-end In-Context Learning API pipeline. It dynamically generates stratified master contexts for Key-Value caching, executes decoupled API calls to a local LLM, and forces a strict JSON schema output. It mathematically encodes the classification decision as a probability vector distribution for downstream divergence evaluation.
 *   `visualization.py`: Contains the layout engines for rendering global classification metrics (Accuracy, QWK) and generating structural confusion matrix heatmaps.
 
 ### Evaluation Pipeline
