@@ -65,7 +65,7 @@ The codebase is modularized to separate data hygiene, explicit modeling, and imp
 *   `visualization.py`: Contains the layout engines for rendering global classification metrics (Accuracy, QWK) and generating structural confusion matrix heatmaps.
 
 ### Evaluation Pipeline
-*   `williams_M1vM2`: Merges the out-of-fold continuous predictions from Method 1 with the categorical predictions from Method 2. It aligns the datasets strictly on respondent IDs (handling formatting anomalies) and executes the William's t-test to compare their respective Pearson correlation coefficients against the ground truth.
+*   `williams_M1vM2`: Merges the out-of-fold continuous predictions from Method 1 with the categorical predictions from Method 2. It aligns the datasets strictly on respondent IDs (handling formatting anomalies) and executes the William's t-test to compare their respective Pearson correlation coefficients.
 ---
 
 ## 4. Execution Requirements
